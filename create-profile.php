@@ -7,6 +7,45 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+
+require_once 'includes/config.php';
+
+$hobbiesResult =
+    $conn->query(
+        "SELECT * FROM hobbies ORDER BY name ASC"
+    );
+
+$hobbies = [];
+
+while ($row = $hobbiesResult->fetch_assoc()) {
+
+    $hobbies[] = $row;
+
+}
+
+$stmt = $conn->prepare(
+    "SELECT id
+     FROM user_profiles
+     WHERE user_id = ?"
+);
+
+$stmt->bind_param(
+    "i",
+    $_SESSION['user_id']
+);
+
+$stmt->execute();
+
+$existingProfile =
+    $stmt->get_result()->fetch_assoc();
+
+if ($existingProfile) {
+
+    header('Location: edit-profile.php');
+
+    exit;
+}
+
 $pageTitle = "Create Profile";
 
 $locations = json_decode(
@@ -25,11 +64,35 @@ include 'includes/header.php';
 
         <h2>Complete Your Profile</h2>
 
+        <?php if (isset($_SESSION['error'])): ?>
+
+            <div class="alert-error">
+
+                <?= $_SESSION['error'] ?>
+
+            </div>
+
+            <?php unset($_SESSION['error']); ?>
+
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['success'])): ?>
+
+            <div class="alert-success">
+
+                <?= $_SESSION['success'] ?>
+
+            </div>
+
+            <?php unset($_SESSION['success']); ?>
+
+        <?php endif; ?>
+
         <label>Profile Photo</label>
 
         <input type="file" name="profile_photo" accept="image/*">
 
-        <select name="state" id="state" required>
+        <select name="state" id="state">
 
             <option value="">
                 Select State
@@ -45,7 +108,7 @@ include 'includes/header.php';
 
         </select>
 
-        <select name="city" id="city" required>
+        <select name="city" id="city">
 
             <option value="">
                 Select City
@@ -55,7 +118,7 @@ include 'includes/header.php';
 
         <!-- Religion -->
 
-        <select name="religion" id="religion" required>
+        <select name="religion" id="religion">
 
             <option value="">
                 Select Religion
@@ -65,7 +128,7 @@ include 'includes/header.php';
 
         <!-- Caste -->
 
-        <select name="caste" id="caste" required>
+        <select name="caste" id="caste">
 
             <option value="">
                 Select Caste
@@ -73,15 +136,29 @@ include 'includes/header.php';
 
         </select>
 
-        <input type="text" name="education" placeholder="Education" required>
+        <select name="hobbies[]" id="hobbies" multiple>
 
-        <input type="text" name="occupation" placeholder="Occupation" required>
+            <?php foreach ($hobbies as $hobby): ?>
+
+                <option value="<?= $hobby['id'] ?>">
+
+                    <?= htmlspecialchars($hobby['name']) ?>
+
+                </option>
+
+            <?php endforeach; ?>
+
+        </select>
+
+        <input type="text" name="education" placeholder="Education">
+
+        <input type="text" name="occupation" placeholder="Occupation">
 
         <input type="text" name="annual_income" placeholder="Annual Income">
 
         <input type="text" name="height" placeholder="Height (e.g. 5ft 10in)">
 
-        <select name="marital_status" required>
+        <select name="marital_status">
             <option value="">
                 Select Marital Status
             </option>
@@ -117,7 +194,7 @@ include 'includes/header.php';
 <script type="module">
 
     const locations =
-<?= json_encode($locations) ?>;
+        <?= json_encode($locations) ?>;
 
     const religionData = await fetch(
         'assets/data/religion-caste.json'
@@ -159,166 +236,176 @@ include 'includes/header.php';
     */
 
 
-/*
-|--------------------------------------------------------------------------
-|  SELECT2 INIT
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    |  SELECT2 INIT
+    |--------------------------------------------------------------------------
+    */
 
-$('#state').select2({
-    placeholder: 'Select State',
-    width: '100%'
+    $('#state').select2({
+        placeholder: 'Select State',
+        width: '100%'
+    });
+
+    $('#city').select2({
+        placeholder: 'Select City',
+        width: '100%'
+    });
+
+    $('#religion').select2({
+        placeholder: 'Select Religion',
+        width: '100%'
+    });
+
+    $('#caste').select2({
+        placeholder: 'Select Caste',
+        width: '100%'
+    });
+
+    $('#hobbies').select2({
+
+    placeholder: 'Select Hobbies',
+
+    width: '100%',
+
+    closeOnSelect: false
+
 });
 
-$('#city').select2({
-    placeholder: 'Select City',
-    width: '100%'
-});
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD CITIES
+    |--------------------------------------------------------------------------
+    */
 
-$('#religion').select2({
-    placeholder: 'Select Religion',
-    width: '100%'
-});
+    function loadCities(state) {
 
-$('#caste').select2({
-    placeholder: 'Select Caste',
-    width: '100%'
-});
+        $('#city').empty();
 
-/*
-|--------------------------------------------------------------------------
-| LOAD CITIES
-|--------------------------------------------------------------------------
-*/
-
-function loadCities(state) {
-
-    $('#city').empty();
-
-    $('#city').append(`
+        $('#city').append(`
         <option value="">
             Select City
         </option>
     `);
 
-    let cities =
-        locations[state] || [];
+        let cities =
+            locations[state] || [];
 
-    cities.forEach(city => {
+        cities.forEach(city => {
 
-        $('#city').append(`
+            $('#city').append(`
             <option value="${city}">
                 ${city}
             </option>
         `);
 
-    });
+        });
 
-    $('#city').trigger('change');
+        $('#city').trigger('change');
 
-}
+    }
 
-/*
-|--------------------------------------------------------------------------
-| LOAD RELIGIONS
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD RELIGIONS
+    |--------------------------------------------------------------------------
+    */
 
-function loadReligions() {
+    function loadReligions() {
 
-    $('#religion').empty();
+        $('#religion').empty();
 
-    $('#religion').append(`
+        $('#religion').append(`
         <option value="">
             Select Religion
         </option>
     `);
 
-    religionData.religion.forEach(item => {
+        religionData.religion.forEach(item => {
 
-        $('#religion').append(`
+            $('#religion').append(`
             <option value="${item.name}">
                 ${item.name}
             </option>
         `);
 
-    });
+        });
 
-    $('#religion').trigger('change');
+        $('#religion').trigger('change');
 
-}
+    }
 
-/*
-|--------------------------------------------------------------------------
-| LOAD CASTES
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD CASTES
+    |--------------------------------------------------------------------------
+    */
 
-function loadCastes(religionName) {
+    function loadCastes(religionName) {
 
-    $('#caste').empty();
+        $('#caste').empty();
 
-    $('#caste').append(`
+        $('#caste').append(`
         <option value="">
             Select Caste
         </option>
     `);
 
-    let religion =
-        religionData.religion.find(
-            r => r.name === religionName
-        );
+        let religion =
+            religionData.religion.find(
+                r => r.name === religionName
+            );
 
-    if (!religion) return;
+        if (!religion) return;
 
-    religion.castes.forEach(caste => {
+        religion.castes.forEach(caste => {
 
-        if (caste.name === '-- Select --')
-            return;
+            if (caste.name === '-- Select --')
+                return;
 
-        $('#caste').append(`
+            $('#caste').append(`
             <option value="${caste.name}">
                 ${caste.name}
             </option>
         `);
 
-    });
+        });
 
-    $('#caste').trigger('change');
-
-}
-
-/*
-|--------------------------------------------------------------------------
-| INITIAL LOAD
-|--------------------------------------------------------------------------
-*/
-
-loadReligions();
-
-/*
-|--------------------------------------------------------------------------
-| EVENTS
-|--------------------------------------------------------------------------
-*/
-
-$('#state').on(
-    'change',
-    function () {
-
-        loadCities($(this).val());
+        $('#caste').trigger('change');
 
     }
-);
 
-$('#religion').on(
-    'change',
-    function () {
+    /*
+    |--------------------------------------------------------------------------
+    | INITIAL LOAD
+    |--------------------------------------------------------------------------
+    */
 
-        loadCastes($(this).val());
+    loadReligions();
 
-    }
-);
+    /*
+    |--------------------------------------------------------------------------
+    | EVENTS
+    |--------------------------------------------------------------------------
+    */
+
+    $('#state').on(
+        'change',
+        function () {
+
+            loadCities($(this).val());
+
+        }
+    );
+
+    $('#religion').on(
+        'change',
+        function () {
+
+            loadCastes($(this).val());
+
+        }
+    );
 
 </script>
 

@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once 'includes/config.php';
 
+
 $user_id = $_SESSION['user_id'];
 
 $stmt = $conn->prepare(
@@ -34,6 +35,50 @@ $locations = json_decode(
     true
 );
 
+$hobbiesResult =
+    $conn->query(
+        "SELECT * FROM hobbies ORDER BY name ASC"
+    );
+
+$hobbies = [];
+
+/*
+|--------------------------------------------------------------------------
+| User Hobbies
+|--------------------------------------------------------------------------
+*/
+
+$userHobbies = [];
+
+$hobbyStmt = $conn->prepare(
+    "SELECT hobby_id
+     FROM user_hobbies
+     WHERE user_id = ?"
+);
+
+$hobbyStmt->bind_param(
+    "i",
+    $user_id
+);
+
+$hobbyStmt->execute();
+
+$hobbyResult =
+    $hobbyStmt->get_result();
+
+while ($row = $hobbyResult->fetch_assoc()) {
+
+    $userHobbies[] =
+        $row['hobby_id'];
+
+}
+
+while ($row = $hobbiesResult->fetch_assoc()) {
+
+    $hobbies[] = $row;
+
+}
+
 $pageTitle = "Edit Profile";
 
 include 'includes/header.php';
@@ -45,7 +90,7 @@ include 'includes/header.php';
 
         <h2>Edit Profile</h2>
 
-        <label>Current Photo</label>
+        <!-- <label>Current Photo</label> -->
 
         <?php
 
@@ -57,17 +102,21 @@ include 'includes/header.php';
         ?>
 
         <img src="<?= $photo ?>" style="
-            width:120px;
-            height:120px;
-            object-fit:cover;
-            border-radius:50%;
-            display:block;
-            margin-bottom:15px;
-            ">
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+            margin: 0 auto 25px;
+            border: 4px solid #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, .1);
+        ">
+
 
         <input type="file" name="profile_photo" accept="image/*">
 
-        <select name="state" id="state" required>
+        <select name="state" id="state">
 
             <?php foreach ($locations as $state => $cities): ?>
 
@@ -81,23 +130,40 @@ include 'includes/header.php';
 
         </select>
 
-        <select name="city" id="city" required>
+        <select name="city" id="city">
 
         </select>
 
-        <select name="religion" id="religion" required>
+        <select name="religion" id="religion">
 
         </select>
 
-        <select name="caste" id="caste" required>
+        <select name="caste" id="caste">
+
+        </select>
+
+        <select name="hobbies[]" id="hobbies" multiple>
+
+            <?php foreach ($hobbies as $hobby): ?>
+
+                <option value="<?= $hobby['id'] ?>" <?= in_array(
+                      $hobby['id'],
+                      $userHobbies
+                  ) ? 'selected' : '' ?>>
+
+                    <?= htmlspecialchars($hobby['name']) ?>
+
+                </option>
+
+            <?php endforeach; ?>
 
         </select>
 
         <input type="text" name="education" value="<?= htmlspecialchars($profile['education']) ?>"
-            placeholder="Education" required>
+            placeholder="Education">
 
         <input type="text" name="occupation" value="<?= htmlspecialchars($profile['occupation']) ?>"
-            placeholder="Occupation" required>
+            placeholder="Occupation">
 
         <input type="text" name="annual_income" value="<?= htmlspecialchars($profile['annual_income']) ?>"
             placeholder="Annual Income">
@@ -133,202 +199,214 @@ include 'includes/header.php';
 
 <script type="module">
 
-const locations =
-<?= json_encode($locations) ?>;
+    const locations =
+        <?= json_encode($locations) ?>;
 
-const religionData = await fetch(
-    'assets/data/religion-caste.json'
-).then(res => res.json());
+    const religionData = await fetch(
+        'assets/data/religion-caste.json'
+    ).then(res => res.json());
 
-/*
-|--------------------------------------------------------------------------
-| ELEMENTS
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | ELEMENTS
+    |--------------------------------------------------------------------------
+    */
 
-const stateSelect =
-    document.getElementById('state');
+    const stateSelect =
+        document.getElementById('state');
 
-const citySelect =
-    document.getElementById('city');
+    const citySelect =
+        document.getElementById('city');
 
-const religionSelect =
-    document.getElementById('religion');
+    const religionSelect =
+        document.getElementById('religion');
 
-const casteSelect =
-    document.getElementById('caste');
+    const casteSelect =
+        document.getElementById('caste');
 
-/*
-|--------------------------------------------------------------------------
-| TOM SELECT INIT
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | SELECT2 INIT
+    |--------------------------------------------------------------------------
+    */
 
-$('#state').select2({
-    placeholder: 'Select State',
-    width: '100%'
-});
+    $('#state').select2({
+        placeholder: 'Select State',
+        width: '100%'
+    });
 
-$('#city').select2({
-    placeholder: 'Select City',
-    width: '100%'
-});
+    $('#city').select2({
+        placeholder: 'Select City',
+        width: '100%'
+    });
 
-$('#religion').select2({
-    placeholder: 'Select Religion',
-    width: '100%'
-});
+    $('#religion').select2({
+        placeholder: 'Select Religion',
+        width: '100%'
+    });
 
-$('#caste').select2({
-    placeholder: 'Select Caste',
-    width: '100%'
-});
+    $('#caste').select2({
+        placeholder: 'Select Caste',
+        width: '100%'
+    });
 
-/*
-|--------------------------------------------------------------------------
-| LOAD CITIES
-|--------------------------------------------------------------------------
-*/
+    $('#hobbies').select2({
 
-function loadCities(state, selectedCity = '') {
+        placeholder: 'Select Hobbies',
 
-    $('#city').empty();
+        width: '100%',
 
-    $('#city').append(
-        `<option value="">Select City</option>`
-    );
+        closeOnSelect: false
 
-    let cities = locations[state] || [];
+    });
 
-    cities.forEach(city => {
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD CITIES
+    |--------------------------------------------------------------------------
+    */
+
+    function loadCities(state, selectedCity = '') {
+
+        $('#city').empty();
 
         $('#city').append(
-            `<option value="${city}">
+            `<option value="">Select City</option>`
+        );
+
+        let cities = locations[state] || [];
+
+        cities.forEach(city => {
+
+            $('#city').append(
+                `<option value="${city}">
                 ${city}
             </option>`
-        );
+            );
 
-    });
+        });
 
-    $('#city').val(selectedCity).trigger('change');
+        $('#city').val(selectedCity).trigger('change');
 
-}
+    }
 
-/*
-|--------------------------------------------------------------------------
-| LOAD RELIGIONS
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD RELIGIONS
+    |--------------------------------------------------------------------------
+    */
 
-function loadReligions(selectedReligion = '') {
+    function loadReligions(selectedReligion = '') {
 
-    $('#religion').empty();
-
-    $('#religion').append(
-        `<option value="">Select Religion</option>`
-    );
-
-    religionData.religion.forEach(item => {
+        $('#religion').empty();
 
         $('#religion').append(
-            `<option value="${item.name}">
+            `<option value="">Select Religion</option>`
+        );
+
+        religionData.religion.forEach(item => {
+
+            $('#religion').append(
+                `<option value="${item.name}">
                 ${item.name}
             </option>`
-        );
+            );
 
-    });
+        });
 
-    $('#religion')
-        .val(selectedReligion)
-        .trigger('change');
+        $('#religion')
+            .val(selectedReligion)
+            .trigger('change');
 
-}
+    }
 
-/*
-|--------------------------------------------------------------------------
-| LOAD CASTES
-|--------------------------------------------------------------------------
-*/
-function loadCastes(
-    religionName,
-    selectedCaste = ''
-) {
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD CASTES
+    |--------------------------------------------------------------------------
+    */
+    function loadCastes(
+        religionName,
+        selectedCaste = ''
+    ) {
 
-    $('#caste').empty();
-
-    $('#caste').append(
-        `<option value="">Select Caste</option>`
-    );
-
-    let religion =
-        religionData.religion.find(
-            r => r.name === religionName
-        );
-
-    if (!religion) return;
-
-    religion.castes.forEach(caste => {
-
-        if (caste.name === '-- Select --')
-            return;
+        $('#caste').empty();
 
         $('#caste').append(
-            `<option value="${caste.name}">
-                ${caste.name}
-            </option>`
+            `<option value="">Select Caste</option>`
         );
 
-    });
+        let religion =
+            religionData.religion.find(
+                r => r.name === religionName
+            );
 
-    $('#caste')
-        .val(selectedCaste)
-        .trigger('change');
+        if (!religion) return;
 
-}
+        religion.castes.forEach(caste => {
 
-/*
-|--------------------------------------------------------------------------
-| INITIAL LOAD
-|--------------------------------------------------------------------------
-*/
+            if (caste.name === '-- Select --')
+                return;
 
-loadCities(
-    "<?= $profile['state'] ?>",
-    "<?= $profile['city'] ?>"
-);
+            $('#caste').append(
+                `<option value="${caste.name}">
+                ${caste.name}
+            </option>`
+            );
 
-loadReligions(
-    "<?= $profile['religion'] ?>"
-);
+        });
 
-loadCastes(
-    "<?= $profile['religion'] ?>",
-    "<?= $profile['caste'] ?>"
-);
-
-/*
-|--------------------------------------------------------------------------
-| EVENTS
-|--------------------------------------------------------------------------
-*/
-
-$('#state').on(
-    'change',
-    function () {
-
-        loadCities($(this).val());
+        $('#caste')
+            .val(selectedCaste)
+            .trigger('change');
 
     }
-);
 
-$('#religion').on(
-    'change',
-    function () {
+    /*
+    |--------------------------------------------------------------------------
+    | INITIAL LOAD
+    |--------------------------------------------------------------------------
+    */
 
-        loadCastes($(this).val());
+    loadCities(
+        "<?= $profile['state'] ?>",
+        "<?= $profile['city'] ?>"
+    );
 
-    }
-);
+    loadReligions(
+        "<?= $profile['religion'] ?>"
+    );
+
+    loadCastes(
+        "<?= $profile['religion'] ?>",
+        "<?= $profile['caste'] ?>"
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | EVENTS
+    |--------------------------------------------------------------------------
+    */
+
+    $('#state').on(
+        'change',
+        function () {
+
+            loadCities($(this).val());
+
+        }
+    );
+
+    $('#religion').on(
+        'change',
+        function () {
+
+            loadCastes($(this).val());
+
+        }
+    );
+
+
 
 </script>
 

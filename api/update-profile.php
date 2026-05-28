@@ -92,21 +92,21 @@ $height = trim($_POST['height'] ?? '');
 $marital_status = trim($_POST['marital_status'] ?? '');
 $about_me = trim($_POST['about_me'] ?? '');
 
-if (
-    empty($state) ||
-    empty($city) ||
-    empty($religion) ||
-    empty($caste) ||
-    empty($education) ||
-    empty($occupation)
-) {
+// if (
+//     empty($state) ||
+//     empty($city) ||
+//     empty($religion) ||
+//     empty($caste) ||
+//     empty($education) ||
+//     empty($occupation)
+// ) {
 
-    $_SESSION['error'] =
-        'Please fill all required fields';
+//     $_SESSION['error'] =
+//         'Please fill all required fields';
 
-    header('Location: ../edit-profile.php');
-    exit;
-}
+//     header('Location: ../edit-profile.php');
+//     exit;
+// }
 
 $stmt = $conn->prepare(
     "UPDATE user_profiles
@@ -139,7 +139,48 @@ $stmt->bind_param(
     $user_id
 );
 
+
+
 if ($stmt->execute()) {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update Hobbies
+    |--------------------------------------------------------------------------
+    */
+
+    $deleteStmt = $conn->prepare(
+        "DELETE FROM user_hobbies
+     WHERE user_id = ?"
+    );
+
+    $deleteStmt->bind_param(
+        "i",
+        $user_id
+    );
+
+    $deleteStmt->execute();
+
+    if (!empty($_POST['hobbies'])) {
+
+        $hobbyStmt = $conn->prepare(
+            "INSERT INTO user_hobbies
+         (user_id, hobby_id)
+         VALUES (?, ?)"
+        );
+
+        foreach ($_POST['hobbies'] as $hobbyId) {
+
+            $hobbyStmt->bind_param(
+                "ii",
+                $user_id,
+                $hobbyId
+            );
+
+            $hobbyStmt->execute();
+
+        }
+    }
 
     $_SESSION['success'] =
         'Profile updated successfully';
@@ -147,5 +188,7 @@ if ($stmt->execute()) {
     header('Location: ../view-profile.php');
     exit;
 }
+
+
 
 echo "Profile update failed";

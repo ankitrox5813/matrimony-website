@@ -24,10 +24,10 @@ if (
         PATHINFO_EXTENSION
     );
 
-  $fileName =
-    uniqid('profile_', true)
-    . '.'
-    . $extension;
+    $fileName =
+        uniqid('profile_', true)
+        . '.'
+        . $extension;
 
     $uploadPath =
         '../uploads/profiles/' .
@@ -35,38 +35,38 @@ if (
 
     $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
-if (!in_array(strtolower($extension), $allowed)) {
+    if (!in_array(strtolower($extension), $allowed)) {
 
-    $_SESSION['error'] =
-        'Only JPG, PNG and WEBP allowed';
+        $_SESSION['error'] =
+            'Only JPG, PNG and WEBP allowed';
 
-    header('Location: ../create-profile.php');
-    exit;
-}
+        header('Location: ../create-profile.php');
+        exit;
+    }
 
-/*
-|--------------------------------------------------------------------------
-| Verify it is actually an image
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | Verify it is actually an image
+    |--------------------------------------------------------------------------
+    */
 
-$imageInfo = getimagesize(
-    $_FILES['profile_photo']['tmp_name']
-);
+    $imageInfo = getimagesize(
+        $_FILES['profile_photo']['tmp_name']
+    );
 
-if ($imageInfo === false) {
+    if ($imageInfo === false) {
 
-    $_SESSION['error'] =
-        'Invalid image file';
+        $_SESSION['error'] =
+            'Invalid image file';
 
-    header('Location: ../create-profile.php');
-    exit;
-}
+        header('Location: ../create-profile.php');
+        exit;
+    }
 
-move_uploaded_file(
-    $_FILES['profile_photo']['tmp_name'],
-    $uploadPath
-);
+    move_uploaded_file(
+        $_FILES['profile_photo']['tmp_name'],
+        $uploadPath
+    );
 
     $profilePhoto =
         'uploads/profiles/' .
@@ -84,22 +84,22 @@ $height = trim($_POST['height'] ?? '');
 $marital_status = trim($_POST['marital_status'] ?? '');
 $about_me = trim($_POST['about_me'] ?? '');
 
-if (
-    empty($state) ||
-    empty($city) ||
-    empty($religion) ||
-    empty($caste) ||
-    empty($education) ||
-    empty($occupation)
-) {
+// if (
+//     empty($state) ||
+//     empty($city) ||
+//     empty($religion) ||
+//     empty($caste) ||
+//     empty($education) ||
+//     empty($occupation)
+// ) {
 
-    $_SESSION['error'] =
-        'Please fill all required fields';
+//     $_SESSION['error'] =
+//         'Please fill all required fields';
 
-    header('Location: ../create-profile.php');
+//     header('Location: ../create-profile.php');
 
-    exit;
-}
+//     exit;
+// }
 
 if ($profilePhoto !== null) {
 
@@ -154,7 +154,39 @@ $stmt->bind_param(
     $about_me
 );
 
+/*
+|--------------------------------------------------------------------------
+| Save Hobbies
+|--------------------------------------------------------------------------
+*/
+
+if (!empty($_POST['hobbies'])) {
+
+    $hobbies = $_POST['hobbies'];
+
+    $hobbyStmt = $conn->prepare(
+        "INSERT INTO user_hobbies
+         (user_id, hobby_id)
+         VALUES (?, ?)"
+    );
+
+    foreach ($hobbies as $hobbyId) {
+
+        $hobbyStmt->bind_param(
+            "ii",
+            $user_id,
+            $hobbyId
+        );
+
+        $hobbyStmt->execute();
+
+    }
+}
+
 if ($stmt->execute()) {
+
+    $_SESSION['success'] =
+        'Profile created successfully';
 
     header(
         'Location: ../dashboard.php'
@@ -162,5 +194,7 @@ if ($stmt->execute()) {
 
     exit;
 }
+
+
 
 echo "Failed to save profile.";
