@@ -10,6 +10,10 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once 'includes/config.php';
 
+require_once 'includes/match-engine.php';
+
+require_once 'includes/recommendation-engine.php';
+
 $user_id = $_SESSION['user_id'];
 
 $stmt = $conn->prepare(
@@ -90,7 +94,34 @@ if ($profileExists) {
         );
 }
 
+$stmt = $conn->prepare(
+    "SELECT id
+     FROM partner_preferences
+     WHERE user_id = ?"
+);
 
+$stmt->bind_param(
+    "i",
+    $user_id
+);
+
+$stmt->execute();
+
+$preferencesExist =
+    $stmt
+        ->get_result()
+        ->num_rows > 0;
+
+$recommendedProfiles =
+    getRecommendedMatches(
+        $conn,
+        $user_id
+    );
+
+$matchCount =
+    count(
+        $recommendedProfiles
+    );
 
 $pageTitle = "Dashboard";
 
@@ -103,25 +134,33 @@ margin:50px auto;
 padding:20px;
 ">
 
+    <div style="text-align:center;">
+
     <h1>
         Welcome,
         <?= htmlspecialchars($_SESSION['user_name']) ?>
     </h1>
-    <img src="<?= $photo ?>" style="
-        width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            object-position: center top;
-            /* display: block; */
-            margin: 0 auto 25px;
-            border: 4px solid #fff;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, .1);
-    ">
+
+    <img
+    src="<?= $photo ?>"
+    style="
+        width:150px;
+        height:150px;
+        border-radius:50%;
+        object-fit:cover;
+        object-position:center top;
+        margin:0 auto 25px;
+        border:4px solid #fff;
+        box-shadow:0 5px 15px rgba(0,0,0,.1);
+    "
+>
+
     <p>
         Email:
         <?= htmlspecialchars($_SESSION['user_email']) ?>
     </p>
+
+</div>
 
     <br>
 
@@ -132,13 +171,13 @@ padding:20px;
     box-shadow:0 4px 15px rgba(0,0,0,.08);
 ">
 
-    <h3>
-        Profile Completion
-    </h3>
+        <h3>
+            Profile Completion
+        </h3>
 
-    <br>
+        <br>
 
-    <div style="
+        <div style="
         width:100%;
         height:14px;
         background:#eee;
@@ -146,48 +185,76 @@ padding:20px;
         overflow:hidden;
     ">
 
-        <div style="
+            <div style="
             width:<?= $completion ?>%;
             height:100%;
             background:#e91e63;
         "></div>
 
+        </div>
+
+        <div style="
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:15px;
+margin-top:20px;
+">
+
+    <div class="dashboard-stat">
+
+        <h2><?= $completion ?>%</h2>
+
+        <p>Profile Status</p>
+
     </div>
 
-    <br>
+    <div class="dashboard-stat">
 
-    <p style="
-        font-size:18px;
-        font-weight:bold;
-        color:#e91e63;
-    ">
-        <?= $completion ?>% Complete
-    </p>
+        <h2>
+            <?= $preferencesExist ? 'Yes' : 'No' ?>
+        </h2>
 
-    <br>
+        <p>Preferences Set</p>
 
-    <?php if ($completion < 100): ?>
+    </div>
 
-        <a href="
+    <div class="dashboard-stat">
+
+        <h2><?= $matchCount ?></h2>
+
+        <p>Recommended Matches</p>
+
+    </div>
+
+</div>
+
+        <br>
+
+        
+        <br>
+
+        <?php if ($completion < 100): ?>
+
+            <a href="
         <?= $profileExists
             ? 'edit-profile.php'
             : 'create-profile.php'
-        ?>
+            ?>
         " class="btn-primary">
 
-            Complete Now
+                Complete Now
 
-        </a>
+            </a>
 
-    <?php else: ?>
+        <?php else: ?>
 
-        <p style="color:green;font-weight:600;">
-            Your profile is complete
-        </p>
+            <p style="color:green;font-weight:600;">
+                Your profile is complete
+            </p>
 
-    <?php endif; ?>
+        <?php endif; ?>
 
-</div>
+    </div>
 
     <div style="
         display:grid;
@@ -197,33 +264,43 @@ padding:20px;
     ">
 
         <div style="
-            background:#fff;
-            padding:25px;
-            border-radius:10px;
-            box-shadow:0 2px 10px rgba(0,0,0,.1);
-        ">
-            <h3>Complete Profile</h3>
-
-            <p>
-                Add education, occupation,
-                religion and preferences.
-            </p>
-
-            <br>
+    background:#fff;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
+">
 
             <?php if (!$profileExists): ?>
+
+                <h3>Complete Profile</h3>
+
+                <p>
+                    Add your education, occupation,
+                    religion and other profile details.
+                </p>
+
+                <br>
 
                 <a href="create-profile.php" class="btn-primary">
                     Complete Profile
                 </a>
 
-                        <?php else: ?>
+            <?php else: ?>
+
+                <h3>My Profile</h3>
+
+                <p>
+                    View and manage your matrimonial
+                    profile information.
+                </p>
+
+                <br>
 
                 <a href="view-profile.php" class="btn-primary">
                     View Profile
                 </a>
 
-                        <?php endif; ?>
+            <?php endif; ?>
 
         </div>
 
@@ -233,16 +310,16 @@ padding:20px;
         border-radius:10px;
         box-shadow:0 2px 10px rgba(0,0,0,.1);
         ">
-            <h3>My Profile</h3>
+            <h3>Partner Preferences</h3>
 
             <p>
-                View your matrimonial profile.
+                View and edit your partner preferences.
             </p>
 
             <br>
 
-            <a href="view-profile.php" class="btn-primary">
-                View Profile
+            <a href="partner-preferences.php" class="btn-primary">
+                Edit Preferences
             </a>
 
         </div>
@@ -253,10 +330,35 @@ padding:20px;
         border-radius:10px;
         box-shadow:0 2px 10px rgba(0,0,0,.1);
         ">
-            <h3>Search Matches</h3>
+
+            <h3>
+                Recommended Matches
+            </h3>
 
             <p>
-                Find suitable matches.
+                Profiles matched according
+                to your partner preferences.
+            </p>
+
+            <br>
+
+            <a href="preferred-profiles.php" class="btn-primary">
+                View Matches
+            </a>
+
+        </div>
+
+        <div style="
+        background:#fff;
+        padding:25px;
+        border-radius:10px;
+        box-shadow:0 2px 10px rgba(0,0,0,.1);
+        ">
+            <h3>Browse Profiles</h3>
+
+            <p>
+                Browse all profiles
+                using advanced filters.
             </p>
 
             <br>

@@ -11,6 +11,10 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once 'includes/config.php';
 
+require_once 'includes/match-engine.php';
+
+require_once 'includes/recommendation-engine.php';
+
 $locations = json_decode(
     file_get_contents(
         'assets/data/locations.json'
@@ -20,222 +24,45 @@ $locations = json_decode(
 
 $currentUser = $_SESSION['user_id'];
 
-$stmt = $conn->prepare(
-    "SELECT gender
-     FROM users
-     WHERE id = ?"
-);
+$filters = [
 
-$stmt->bind_param(
-    "i",
-    $currentUser
-);
+    'state' =>
+        $_GET['state'] ?? '',
 
-$stmt->execute();
+    'city' =>
+        $_GET['city'] ?? '',
 
-$userData =
-    $stmt
-        ->get_result()
-        ->fetch_assoc();
+    'religion' =>
+        $_GET['religion'] ?? '',
 
-$currentUserGender =
-    $userData['gender'] ?? null;
+    'caste' =>
+        $_GET['caste'] ?? '',
 
-$preferredGender = null;
+    'min_age' =>
+        $_GET['min_age'] ?? '',
 
-if ($currentUserGender === 'Male') {
+    'max_age' =>
+        $_GET['max_age'] ?? ''
 
-    $preferredGender = 'Female';
+];
 
-} elseif ($currentUserGender === 'Female') {
+$profiles =
+    getRecommendedMatches(
+        $conn,
+        $currentUser,
+        $filters
+    );
 
-    $preferredGender = 'Male';
-}
 
-$where = "WHERE u.id != ?";
-$params = [$currentUser];
-$types = "i";
 
-if ($preferredGender !== null) {
-
-    $where .= " AND u.gender = ?";
-
-    $params[] = $preferredGender;
-
-    $types .= "s";
-}
-
-/*
-|--------------------------------------------------------------------------
-| Pagination
-|--------------------------------------------------------------------------
-*/
-
-$page =
-    isset($_GET['page'])
-    ? max(1, (int) $_GET['page'])
-    : 1;
-
-$limit = 12;
-
-$offset =
-    ($page - 1) * $limit;
-
-/*
-|--------------------------------------------------------------------------
-| Filters
-|--------------------------------------------------------------------------
-*/
-
-
-if (!empty($_GET['state'])) {
-
-    $where .= " AND p.state = ? ";
-
-    $params[] = $_GET['state'];
-
-    $types .= "s";
-}
-
-if (!empty($_GET['city'])) {
-
-    $where .= " AND p.city = ? ";
-
-    $params[] = $_GET['city'];
-
-    $types .= "s";
-}
-
-
-
-if (!empty($_GET['religion'])) {
-
-    $where .= " AND p.religion = ? ";
-
-    $params[] = $_GET['religion'];
-
-    $types .= "s";
-}
-
-if (!empty($_GET['caste'])) {
-
-    $where .= " AND p.caste = ? ";
-
-    $params[] = $_GET['caste'];
-
-    $types .= "s";
-}
-
-/*
-|--------------------------------------------------------------------------
-| Min Age
-|--------------------------------------------------------------------------
-*/
-
-if (!empty($_GET['min_age'])) {
-
-    $where .= " AND u.age >= ? ";
-
-    $params[] = (int) $_GET['min_age'];
-
-    $types .= "i";
-}
-
-/*
-|--------------------------------------------------------------------------
-| Max Age
-|--------------------------------------------------------------------------
-*/
-
-if (!empty($_GET['max_age'])) {
-
-    $where .= " AND u.age <= ? ";
-
-    $params[] = (int) $_GET['max_age'];
-
-    $types .= "i";
-}
-
-/*
-|--------------------------------------------------------------------------
-| Total Records
-|--------------------------------------------------------------------------
-*/
-
-$countSql =
-    "
-SELECT COUNT(*)
-FROM users u
-JOIN user_profiles p
-ON u.id = p.user_id
-" . $where;
-
-$countStmt =
-    $conn->prepare($countSql);
-
-$countStmt->bind_param(
-    $types,
-    ...$params
-);
-
-$countStmt->execute();
-
-$countStmt->bind_result(
-    $totalRecords
-);
-
-$countStmt->fetch();
-
-$countStmt->close();
-
-$totalPages =
-    ceil($totalRecords / $limit);
-
-/*
-|--------------------------------------------------------------------------
-| Fetch Profiles
-|--------------------------------------------------------------------------
-*/
-
-$sql =
-    "
-SELECT
-    u.id,
-    u.full_name,
-    u.profile_photo,
-    u.gender,
-    u.age,
-    p.city,
-    p.state,
-    p.religion,
-    p.caste
-FROM users u
-JOIN user_profiles p
-ON u.id = p.user_id
-" . $where . "
-ORDER BY u.id DESC
-LIMIT $limit OFFSET $offset
-";
-
-$stmt = $conn->prepare($sql);
-
-$stmt->bind_param(
-    $types,
-    ...$params
-);
-
-$stmt->execute();
-
-$profiles = $stmt->get_result();
-
-$pageTitle = "Browse Profiles";
+$pageTitle = "Recommended Matches";
 
 include 'includes/header.php';
 ?>
 
 <section class="profiles-section">
 
-    <h2>Browse Profiles</h2>
+    <h2>Recommended Matches</h2>
 
     <?php if (isset($_SESSION['error'])): ?>
 
@@ -348,7 +175,7 @@ include 'includes/header.php';
 
         <!-- Reset -->
 
-        <a href="profiles.php" class="btn-primary">
+        <a href="preferred-profiles.php" class="btn-primary">
             Reset
         </a>
 
@@ -360,9 +187,9 @@ include 'includes/header.php';
 
     <div class="profile-grid">
 
-        <?php if ($profiles->num_rows > 0): ?>
+        <?php if (!empty($profiles)): ?>
 
-            <?php while ($profile = $profiles->fetch_assoc()): ?>
+            <?php foreach ($profiles as $profile): ?>
 
                 <?php
 
@@ -375,11 +202,28 @@ include 'includes/header.php';
 
                 <div class="profile-card">
 
+                    <div class="match-badge">
+                        <?= $profile['match_score'] ?>% Match
+                    </div>
+
                     <img src="<?= $photo ?>" alt="Profile">
 
                     <h3>
                         <?= htmlspecialchars($profile['full_name']) ?>
                     </h3>
+
+                    <div class="match-reasons">
+
+                        <?= implode(
+                            ' • ',
+                            array_slice(
+                                $profile['match_reasons'],
+                                0,
+                                3
+                            )
+                        ) ?>
+
+                    </div>
 
                     <p>
                         <?= htmlspecialchars($profile['age']) ?>
@@ -396,7 +240,7 @@ include 'includes/header.php';
 
                 </div>
 
-            <?php endwhile; ?>
+            <?php endforeach; ?>
 
         <?php else: ?>
 
@@ -414,51 +258,7 @@ include 'includes/header.php';
 
     <!-- Pagination -->
 
-    <?php if ($totalPages > 1): ?>
-
-        <div style="
-    margin-top:30px;
-    text-align:center;
-    ">
-
-            <?php if ($page > 1): ?>
-
-                <a href="?<?= http_build_query(
-                    array_merge(
-                        $_GET,
-                        ['page' => $page - 1]
-                    )
-                ) ?>" class="btn-primary">
-                    Previous
-                </a>
-
-            <?php endif; ?>
-
-            <span style="
-        margin:0 15px;
-        font-weight:bold;
-        ">
-                Page <?= $page ?>
-                of
-                <?= $totalPages ?>
-            </span>
-
-            <?php if ($page < $totalPages): ?>
-
-                <a href="?<?= http_build_query(
-                    array_merge(
-                        $_GET,
-                        ['page' => $page + 1]
-                    )
-                ) ?>" class="btn-primary">
-                    Next
-                </a>
-
-            <?php endif; ?>
-
-        </div>
-
-    <?php endif; ?>
+    <!--  -->
 
 </section>
 
