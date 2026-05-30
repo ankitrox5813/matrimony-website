@@ -9,21 +9,10 @@
 
     <div class="footer-links">
 
-        <a href="#">
-            User Agreement
-        </a>
-
-        <a href="#">
-            Data Protection Policy
-        </a>
-
-        <a href="#">
-            Online Safety Guide
-        </a>
-
-        <a href="#">
-            Report Concerns
-        </a>
+        <a href="#">User Agreement</a>
+        <a href="#">Data Protection Policy</a>
+        <a href="#">Online Safety Guide</a>
+        <a href="#">Report Concerns</a>
 
     </div>
 

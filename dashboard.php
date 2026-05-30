@@ -80,19 +80,21 @@ if ($profileExists) {
 
     foreach ($fields as $field) {
 
-        if (!empty(trim($field))) {
-
+        if (!empty($field)) {
             $filled++;
-
         }
-
     }
 
-    $completion =
-        round(
-            ($filled / count($fields)) * 100
-        );
+    $completion = round(
+        ($filled / count($fields)) * 100
+    );
 }
+
+/*
+|--------------------------------------------------------------------------
+| PARTNER PREFERENCES
+|--------------------------------------------------------------------------
+*/
 
 $stmt = $conn->prepare(
     "SELECT id
@@ -100,277 +102,178 @@ $stmt = $conn->prepare(
      WHERE user_id = ?"
 );
 
-$stmt->bind_param(
-    "i",
-    $user_id
-);
-
+$stmt->bind_param("i", $user_id);
 $stmt->execute();
 
 $preferencesExist =
-    $stmt
-        ->get_result()
-        ->num_rows > 0;
+    $stmt->get_result()->num_rows > 0;
 
-$recommendedProfiles =
-    getRecommendedMatches(
+/*
+|--------------------------------------------------------------------------
+| MATCH COUNT
+|--------------------------------------------------------------------------
+*/
+
+$allMatches = [];
+
+if ($preferencesExist && $profileExists) {
+
+    $allMatches = getRecommendedMatches(
         $conn,
-        $user_id
+        $user_id,
+        []
     );
+}
 
-$matchCount =
-    count(
-        $recommendedProfiles
-    );
+$matchCount = count($allMatches);
+$topMatches = array_slice($allMatches, 0, 3);
 
 $pageTitle = "Dashboard";
 
 include 'includes/header.php';
+
+$initials = '';
+
+if (!empty($_SESSION['user_name'])) {
+    $parts = preg_split('/\s+/', trim($_SESSION['user_name']));
+    $initials = strtoupper(substr($parts[0], 0, 1));
+    if (isset($parts[1])) {
+        $initials .= strtoupper(substr($parts[1], 0, 1));
+    }
+}
 ?>
 
-<div style="
-max-width:1200px;
-margin:50px auto;
-padding:20px;
-">
+<section class="dashboard-section">
+    <div class="dashboard-inner">
 
-    <div style="text-align:center;">
-
-    <h1>
-        Welcome,
-        <?= htmlspecialchars($_SESSION['user_name']) ?>
-    </h1>
-
-    <img
-    src="<?= $photo ?>"
-    style="
-        width:150px;
-        height:150px;
-        border-radius:50%;
-        object-fit:cover;
-        object-position:center top;
-        margin:0 auto 25px;
-        border:4px solid #fff;
-        box-shadow:0 5px 15px rgba(0,0,0,.1);
-    "
->
-
-    <p>
-        Email:
-        <?= htmlspecialchars($_SESSION['user_email']) ?>
-    </p>
-
-</div>
-
-    <br>
-
-    <div style="
-    background:#fff;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 4px 15px rgba(0,0,0,.08);
-">
-
-        <h3>
-            Profile Completion
-        </h3>
-
-        <br>
-
-        <div style="
-        width:100%;
-        height:14px;
-        background:#eee;
-        border-radius:30px;
-        overflow:hidden;
-    ">
-
-            <div style="
-            width:<?= $completion ?>%;
-            height:100%;
-            background:#e91e63;
-        "></div>
-
+        <div class="dash-welcome">
+            <div class="dash-welcome-text">
+                <h1>Welcome, <span><?= htmlspecialchars($_SESSION['user_name']) ?></span></h1>
+                <p><?= htmlspecialchars($_SESSION['user_email']) ?></p>
+            </div>
+            <div class="dash-avatar">
+                <?php if (!empty($user['profile_photo'])): ?>
+                    <img src="<?= htmlspecialchars($photo) ?>" alt="Profile photo">
+                <?php else: ?>
+                    <?= htmlspecialchars($initials ?: 'A') ?>
+                <?php endif; ?>
+            </div>
         </div>
 
-        <div style="
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:15px;
-margin-top:20px;
-">
+        <div class="completion-card">
+            <div class="completion-header">
+                <span>Profile completion</span>
+                <strong><?= (int) $completion ?>%</strong>
+            </div>
+            <div class="completion-bar">
+                <div class="completion-fill" style="width: <?= (int) $completion ?>%;"></div>
+            </div>
+            <?php if ($completion < 100): ?>
+                <p class="completion-tip">Complete your profile to get better match recommendations.</p>
+            <?php else: ?>
+                <p class="completion-tip" style="color: #166534;">Your profile is complete.</p>
+            <?php endif; ?>
+        </div>
 
-    <div class="dashboard-stat">
-
-        <h2><?= $completion ?>%</h2>
-
-        <p>Profile Status</p>
-
-    </div>
-
-    <div class="dashboard-stat">
-
-        <h2>
-            <?= $preferencesExist ? 'Yes' : 'No' ?>
-        </h2>
-
-        <p>Preferences Set</p>
-
-    </div>
-
-    <div class="dashboard-stat">
-
-        <h2><?= $matchCount ?></h2>
-
-        <p>Recommended Matches</p>
-
-    </div>
-
-</div>
-
-        <br>
-
-        
-        <br>
+        <div class="dash-stats">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-label">Profile status</div>
+                <div class="stat-value"><?= (int) $completion ?>%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚙️</div>
+                <div class="stat-label">Preferences set</div>
+                <div class="stat-value"><?= $preferencesExist ? 'Yes' : 'No' ?></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💞</div>
+                <div class="stat-label">Recommended matches</div>
+                <div class="stat-value"><?= (int) $matchCount ?></div>
+            </div>
+        </div>
 
         <?php if ($completion < 100): ?>
-
-            <a href="
-        <?= $profileExists
-            ? 'edit-profile.php'
-            : 'create-profile.php'
-            ?>
-        " class="btn-primary">
-
-                Complete Now
-
-            </a>
-
-        <?php else: ?>
-
-            <p style="color:green;font-weight:600;">
-                Your profile is complete
+            <p style="margin-bottom: 28px;">
+                <a href="<?= $profileExists ? 'edit-profile.php' : 'create-profile.php' ?>" class="btn-primary">
+                    Complete profile
+                </a>
             </p>
-
         <?php endif; ?>
 
-    </div>
-
-    <div style="
-        display:grid;
-        grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-        gap:20px;
-        margin-top:30px;
-    ">
-
-        <div style="
-    background:#fff;
-    padding:25px;
-    border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,.1);
-">
+        <h2 class="dash-actions-title">Quick actions</h2>
+        <div class="dash-grid">
 
             <?php if (!$profileExists): ?>
-
-                <h3>Complete Profile</h3>
-
-                <p>
-                    Add your education, occupation,
-                    religion and other profile details.
-                </p>
-
-                <br>
-
-                <a href="create-profile.php" class="btn-primary">
-                    Complete Profile
+                <a href="create-profile.php" class="dash-card">
+                    <div class="dash-card-icon">📝</div>
+                    <div class="dash-card-title">Complete profile</div>
+                    <div class="dash-card-desc">Add education, occupation, religion and other details.</div>
+                    <span class="dash-card-arrow">Get started →</span>
                 </a>
-
             <?php else: ?>
-
-                <h3>My Profile</h3>
-
-                <p>
-                    View and manage your matrimonial
-                    profile information.
-                </p>
-
-                <br>
-
-                <a href="view-profile.php" class="btn-primary">
-                    View Profile
+                <a href="view-profile.php" class="dash-card">
+                    <div class="dash-card-icon">👤</div>
+                    <div class="dash-card-title">My profile</div>
+                    <div class="dash-card-desc">View and manage your matrimonial profile.</div>
+                    <span class="dash-card-arrow">View profile →</span>
                 </a>
-
             <?php endif; ?>
 
-        </div>
+            <a href="partner-preferences.php" class="dash-card">
+                <div class="dash-card-icon">🎯</div>
+                <div class="dash-card-title">Partner preferences</div>
+                <div class="dash-card-desc">Set religion, location and other partner criteria.</div>
+                <span class="dash-card-arrow">Edit preferences →</span>
+            </a>
 
-        <div style="
-        background:#fff;
-        padding:25px;
-        border-radius:10px;
-        box-shadow:0 2px 10px rgba(0,0,0,.1);
-        ">
-            <h3>Partner Preferences</h3>
+            <a href="preferred-profiles.php" class="dash-card">
+                <div class="dash-card-icon">✨</div>
+                <div class="dash-card-title">Recommended matches</div>
+                <div class="dash-card-desc">Profiles matched to your partner preferences.</div>
+                <span class="dash-card-arrow">View matches →</span>
+            </a>
 
-            <p>
-                View and edit your partner preferences.
-            </p>
-
-            <br>
-
-            <a href="partner-preferences.php" class="btn-primary">
-                Edit Preferences
+            <a href="profiles.php" class="dash-card">
+                <div class="dash-card-icon">🔍</div>
+                <div class="dash-card-title">Browse profiles</div>
+                <div class="dash-card-desc">Search all profiles with advanced filters.</div>
+                <span class="dash-card-arrow">Search →</span>
             </a>
 
         </div>
 
-        <div style="
-        background:#fff;
-        padding:25px;
-        border-radius:10px;
-        box-shadow:0 2px 10px rgba(0,0,0,.1);
-        ">
+        <div class="completion-card" style="margin-top: 40px;">
+            <div class="completion-header">
+                <span>Top recommended matches</span>
+            </div>
 
-            <h3>
-                Recommended Matches
-            </h3>
+            <?php if (!empty($topMatches)): ?>
 
-            <p>
-                Profiles matched according
-                to your partner preferences.
-            </p>
+                <?php foreach ($topMatches as $match): ?>
+                    <div class="dash-match-row">
+                        <div>
+                            <strong><?= htmlspecialchars($match['full_name']) ?></strong>
+                            <br>
+                            <small style="color: var(--clr-muted);">
+                                <?= htmlspecialchars($match['city']) ?>,
+                                <?= htmlspecialchars($match['state']) ?>
+                            </small>
+                        </div>
+                        <div class="dash-match-score"><?= (int) $match['match_score'] ?>%</div>
+                    </div>
+                <?php endforeach; ?>
 
-            <br>
+                <p style="margin-top: 20px;">
+                    <a href="preferred-profiles.php" class="btn-primary">View all matches</a>
+                </p>
 
-            <a href="preferred-profiles.php" class="btn-primary">
-                View Matches
-            </a>
-
-        </div>
-
-        <div style="
-        background:#fff;
-        padding:25px;
-        border-radius:10px;
-        box-shadow:0 2px 10px rgba(0,0,0,.1);
-        ">
-            <h3>Browse Profiles</h3>
-
-            <p>
-                Browse all profiles
-                using advanced filters.
-            </p>
-
-            <br>
-
-            <a href="profiles.php" class="btn-primary">
-                Search
-            </a>
-
+            <?php else: ?>
+                <p class="completion-tip">No recommended matches yet. Set partner preferences to see matches.</p>
+            <?php endif; ?>
         </div>
 
     </div>
-
-</div>
+</section>
 
 <?php include 'includes/footer.php'; ?>

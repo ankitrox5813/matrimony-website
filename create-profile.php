@@ -7,406 +7,217 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-
 require_once 'includes/config.php';
 
-$hobbiesResult =
-    $conn->query(
-        "SELECT * FROM hobbies ORDER BY name ASC"
-    );
-
+$hobbiesResult = $conn->query("SELECT * FROM hobbies ORDER BY name ASC");
 $hobbies = [];
 
 while ($row = $hobbiesResult->fetch_assoc()) {
-
     $hobbies[] = $row;
-
 }
 
-$stmt = $conn->prepare(
-    "SELECT id
-     FROM user_profiles
-     WHERE user_id = ?"
-);
-
-$stmt->bind_param(
-    "i",
-    $_SESSION['user_id']
-);
-
+$stmt = $conn->prepare("SELECT id FROM user_profiles WHERE user_id = ?");
+$stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 
-$existingProfile =
-    $stmt->get_result()->fetch_assoc();
-
-if ($existingProfile) {
-
+if ($stmt->get_result()->fetch_assoc()) {
     header('Location: edit-profile.php');
-
     exit;
 }
 
 $pageTitle = "Create Profile";
 
 $locations = json_decode(
-    file_get_contents(
-        'assets/data/locations.json'
-    ),
+    file_get_contents('assets/data/locations.json'),
     true
 );
 
 include 'includes/header.php';
 ?>
 
-<div class="form-section">
+<section class="edit-profile-section">
+    <div class="edit-profile-inner">
 
-    <form class="auth-form" method="POST" action="api/save-profile.php" enctype="multipart/form-data">
+        <a href="dashboard.php" class="back-link">← Back to Dashboard</a>
 
-        <h2>Complete Your Profile</h2>
+        <div class="edit-profile-header">
+            <h1>Complete Your Profile</h1>
+            <p>Add your details to start receiving match recommendations.</p>
+        </div>
 
-        <?php if (isset($_SESSION['error'])): ?>
+        <div class="profile-form-card">
 
-            <div class="alert-error">
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="alert error"><?= htmlspecialchars($_SESSION['error']) ?></div>
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
 
-                <?= $_SESSION['error'] ?>
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="alert success"><?= htmlspecialchars($_SESSION['success']) ?></div>
+                <?php unset($_SESSION['success']); ?>
+            <?php endif; ?>
 
-            </div>
+            <form method="POST" action="api/save-profile.php" enctype="multipart/form-data">
 
-            <?php unset($_SESSION['error']); ?>
+                <div class="form-group photo-upload">
+                    <label class="form-field-label">Profile photo</label>
+                    <div class="photo-upload-preview">
+                        <img
+                            id="profilePhotoPreview"
+                            src="assets/images/default-user.png"
+                            alt="Profile preview"
+                        >
+                        <div class="photo-upload-meta">
+                            <h4>Upload your photo</h4>
+                            <p>A clear photo helps you get more responses.</p>
+                        </div>
+                    </div>
+                    <div class="file-upload-control">
+                        <label class="file-upload-btn">
+                            <input
+                                type="file"
+                                name="profile_photo"
+                                id="profilePhotoInput"
+                                class="file-upload-input"
+                                accept="image/*"
+                            >
+                            Choose photo
+                        </label>
+                        <span class="file-upload-name" id="profilePhotoFileName">No file chosen</span>
+                        <p class="file-upload-hint">JPG or PNG recommended.</p>
+                    </div>
+                </div>
 
-        <?php endif; ?>
+                <div class="form-group">
+                    <label class="form-field-label" for="state">State</label>
+                    <select name="state" id="state">
+                        <option value="">Select State</option>
+                        <?php foreach ($locations as $state => $cities): ?>
+                            <option value="<?= htmlspecialchars($state) ?>"><?= htmlspecialchars($state) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
 
-        <?php if (isset($_SESSION['success'])): ?>
+                <div class="form-group">
+                    <label class="form-field-label" for="city">City</label>
+                    <select name="city" id="city">
+                        <option value="">Select City</option>
+                    </select>
+                </div>
 
-            <div class="alert-success">
+                <div class="form-group">
+                    <label class="form-field-label" for="religion">Religion</label>
+                    <select name="religion" id="religion">
+                        <option value="">Select Religion</option>
+                    </select>
+                </div>
 
-                <?= $_SESSION['success'] ?>
+                <div class="form-group">
+                    <label class="form-field-label" for="caste">Community / Caste</label>
+                    <select name="caste" id="caste">
+                        <option value="">Select Caste</option>
+                    </select>
+                </div>
 
-            </div>
+                <div class="form-group">
+                    <label class="form-field-label" for="hobbies">Hobbies</label>
+                    <select name="hobbies[]" id="hobbies" multiple>
+                        <?php foreach ($hobbies as $hobby): ?>
+                            <option value="<?= (int) $hobby['id'] ?>">
+                                <?= htmlspecialchars($hobby['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
 
-            <?php unset($_SESSION['success']); ?>
+                <div class="form-group">
+                    <label class="form-field-label" for="education">Education</label>
+                    <input type="text" name="education" id="education" placeholder="e.g. B.Tech, MBA">
+                </div>
 
-        <?php endif; ?>
+                <div class="form-group">
+                    <label class="form-field-label" for="occupation">Occupation</label>
+                    <input type="text" name="occupation" id="occupation" placeholder="Your profession">
+                </div>
 
-        <label>Profile Photo</label>
+                <div class="form-group">
+                    <label class="form-field-label" for="annual_income">Annual income</label>
+                    <input type="text" name="annual_income" id="annual_income" placeholder="e.g. 5–10 LPA">
+                </div>
 
-        <input type="file" name="profile_photo" accept="image/*">
+                <div class="form-group">
+                    <label class="form-field-label" for="height">Height</label>
+                    <input type="text" name="height" id="height" placeholder="e.g. 5 ft 10 in">
+                </div>
 
-        <select name="state" id="state">
+                <div class="form-group">
+                    <label class="form-field-label" for="marital_status">Marital status</label>
+                    <select name="marital_status" id="marital_status">
+                        <option value="">Select Marital Status</option>
+                        <option value="Never Married">Never Married</option>
+                        <option value="Divorced">Divorced</option>
+                        <option value="Widowed">Widowed</option>
+                    </select>
+                </div>
 
-            <option value="">
-                Select State
-            </option>
+                <div class="form-group">
+                    <label class="form-field-label" for="about_me">About you</label>
+                    <textarea name="about_me" id="about_me" rows="5" placeholder="Tell us about yourself"></textarea>
+                </div>
 
-            <?php foreach ($locations as $state => $cities): ?>
+                <button type="submit" class="btn-save">Save Profile</button>
 
-                <option value="<?= $state ?>">
-                    <?= $state ?>
-                </option>
+            </form>
+        </div>
+    </div>
+</section>
 
-            <?php endforeach; ?>
-
-        </select>
-
-        <select name="city" id="city">
-
-            <option value="">
-                Select City
-            </option>
-
-        </select>
-
-        <!-- Religion -->
-
-        <select name="religion" id="religion">
-
-            <option value="">
-                Select Religion
-            </option>
-
-        </select>
-
-        <!-- Caste -->
-
-        <select name="caste" id="caste">
-
-            <option value="">
-                Select Caste
-            </option>
-
-        </select>
-
-        <select name="hobbies[]" id="hobbies" multiple>
-
-            <?php foreach ($hobbies as $hobby): ?>
-
-                <option value="<?= $hobby['id'] ?>">
-
-                    <?= htmlspecialchars($hobby['name']) ?>
-
-                </option>
-
-            <?php endforeach; ?>
-
-        </select>
-
-        <input type="text" name="education" placeholder="Education">
-
-        <input type="text" name="occupation" placeholder="Occupation">
-
-        <input type="text" name="annual_income" placeholder="Annual Income">
-
-        <input type="text" name="height" placeholder="Height (e.g. 5ft 10in)">
-
-        <select name="marital_status">
-            <option value="">
-                Select Marital Status
-            </option>
-
-            <option value="Never Married">
-                Never Married
-            </option>
-
-            <option value="Divorced">
-                Divorced
-            </option>
-
-            <option value="Widowed">
-                Widowed
-            </option>
-        </select>
-
-        <textarea name="about_me" rows="5" placeholder="Tell us about yourself" style="
-            width:100%;
-            padding:15px;
-            margin-bottom:20px;
-            "></textarea>
-
-        <button type="submit">
-            Save Profile
-        </button>
-
-    </form>
-
-</div>
-
-
+<script src="assets/js/profile-form.js"></script>
 <script type="module">
+    const locations = <?= json_encode($locations) ?>;
+    const religionData = await fetch('assets/data/religion-caste.json').then(res => res.json());
 
-    const locations =
-        <?= json_encode($locations) ?>;
+    const select2Single = { width: '100%', allowClear: true };
+    const select2Multi = { width: '100%', closeOnSelect: false, placeholder: '' };
 
-    const religionData = await fetch(
-        'assets/data/religion-caste.json'
-    ).then(res => res.json());
-
-    /*
-    |--------------------------------------------------------------------------
-    | STATE / CITY
-    |--------------------------------------------------------------------------
-    */
-
-    const stateSelect =
-        document.getElementById('state');
-
-    const citySelect =
-        document.getElementById('city');
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | RELIGION / CASTE
-    |--------------------------------------------------------------------------
-    */
-
-    const religionSelect =
-        document.getElementById('religion');
-
-    const casteSelect =
-        document.getElementById('caste');
-
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Religion Change
-    |--------------------------------------------------------------------------
-    */
-
-
-    /*
-    |--------------------------------------------------------------------------
-    |  SELECT2 INIT
-    |--------------------------------------------------------------------------
-    */
-
-    $('#state').select2({
-        placeholder: 'Select State',
-        width: '100%'
-    });
-
-    $('#city').select2({
-        placeholder: 'Select City',
-        width: '100%'
-    });
-
-    $('#religion').select2({
-        placeholder: 'Select Religion',
-        width: '100%'
-    });
-
-    $('#caste').select2({
-        placeholder: 'Select Caste',
-        width: '100%'
-    });
-
-    $('#hobbies').select2({
-
-    placeholder: 'Select Hobbies',
-
-    width: '100%',
-
-    closeOnSelect: false
-
-});
-
-    /*
-    |--------------------------------------------------------------------------
-    | LOAD CITIES
-    |--------------------------------------------------------------------------
-    */
+    $('#state').select2({ ...select2Single, placeholder: 'Select State' });
+    $('#city').select2({ ...select2Single, placeholder: 'Select City' });
+    $('#religion').select2({ ...select2Single, placeholder: 'Select Religion' });
+    $('#caste').select2({ ...select2Single, placeholder: 'Select Caste' });
+    $('#marital_status').select2({ ...select2Single, placeholder: 'Select Marital Status' });
+    $('#hobbies').select2({ ...select2Multi, placeholder: 'Select hobbies' });
 
     function loadCities(state) {
-
-        $('#city').empty();
-
-        $('#city').append(`
-        <option value="">
-            Select City
-        </option>
-    `);
-
-        let cities =
-            locations[state] || [];
-
-        cities.forEach(city => {
-
-            $('#city').append(`
-            <option value="${city}">
-                ${city}
-            </option>
-        `);
-
+        $('#city').empty().append('<option value="">Select City</option>');
+        (locations[state] || []).forEach(city => {
+            $('#city').append(`<option value="${city}">${city}</option>`);
         });
-
         $('#city').trigger('change');
-
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | LOAD RELIGIONS
-    |--------------------------------------------------------------------------
-    */
 
     function loadReligions() {
-
-        $('#religion').empty();
-
-        $('#religion').append(`
-        <option value="">
-            Select Religion
-        </option>
-    `);
-
+        $('#religion').empty().append('<option value="">Select Religion</option>');
         religionData.religion.forEach(item => {
-
-            $('#religion').append(`
-            <option value="${item.name}">
-                ${item.name}
-            </option>
-        `);
-
+            $('#religion').append(`<option value="${item.name}">${item.name}</option>`);
         });
-
         $('#religion').trigger('change');
-
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | LOAD CASTES
-    |--------------------------------------------------------------------------
-    */
 
     function loadCastes(religionName) {
-
-        $('#caste').empty();
-
-        $('#caste').append(`
-        <option value="">
-            Select Caste
-        </option>
-    `);
-
-        let religion =
-            religionData.religion.find(
-                r => r.name === religionName
-            );
-
+        $('#caste').empty().append('<option value="">Select Caste</option>');
+        const religion = religionData.religion.find(r => r.name === religionName);
         if (!religion) return;
-
         religion.castes.forEach(caste => {
-
-            if (caste.name === '-- Select --')
-                return;
-
-            $('#caste').append(`
-            <option value="${caste.name}">
-                ${caste.name}
-            </option>
-        `);
-
+            if (caste.name === '-- Select --') return;
+            $('#caste').append(`<option value="${caste.name}">${caste.name}</option>`);
         });
-
         $('#caste').trigger('change');
-
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | INITIAL LOAD
-    |--------------------------------------------------------------------------
-    */
 
     loadReligions();
 
-    /*
-    |--------------------------------------------------------------------------
-    | EVENTS
-    |--------------------------------------------------------------------------
-    */
-
-    $('#state').on(
-        'change',
-        function () {
-
-            loadCities($(this).val());
-
-        }
-    );
-
-    $('#religion').on(
-        'change',
-        function () {
-
-            loadCastes($(this).val());
-
-        }
-    );
-
+    $('#state').on('change', function () { loadCities($(this).val()); });
+    $('#religion').on('change', function () { loadCastes($(this).val()); });
 </script>
 
 <?php include 'includes/footer.php'; ?>

@@ -170,16 +170,7 @@ ON u.id = p.user_id
 $stmt =
     $conn->prepare($sql);
 
-$stmt->bind_param(
-    $types,
-    ...$params
-);
-
-    $stmt->bind_param(
-        "is",
-        $userId,
-        $preferredGender
-    );
+    $stmt->bind_param($types, ...$params);
 
     $stmt->execute();
 

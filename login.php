@@ -13,36 +13,22 @@ include 'includes/header.php';
 
         <h2>Welcome Back</h2>
 
-        <?php if(isset($_SESSION['success'])): ?>
-            <div style="
-                background:#e7ffe7;
-                color:green;
-                padding:10px;
-                margin-bottom:15px;
-                border-radius:5px;
-                text-align:center;
-            ">
-                <?= $_SESSION['success']; ?>
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="auth-alert success">
+                <?= htmlspecialchars($_SESSION['success']) ?>
             </div>
         <?php
             unset($_SESSION['success']);
-            endif;
+        endif;
         ?>
 
-        <?php if(isset($_SESSION['error'])): ?>
-            <div style="
-                background:#ffe5e5;
-                color:red;
-                padding:10px;
-                margin-bottom:15px;
-                border-radius:5px;
-                text-align:center;
-            ">
-                <?= $_SESSION['error']; ?>
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="auth-alert error">
+                <?= htmlspecialchars($_SESSION['error']) ?>
             </div>
         <?php
             unset($_SESSION['error']);
-            endif;
+        endif;
         ?>
 
         <p class="form-subtitle">
