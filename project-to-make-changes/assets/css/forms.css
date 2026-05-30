@@ -1,0 +1,345 @@
+/* Profile & preference forms — Select2, file upload, layout */
+
+.auth-form--profile {
+  max-width: 640px;
+}
+
+.edit-profile-section .profile-form-card form {
+  margin: 0;
+}
+
+.profile-form-card .form-group {
+  margin-bottom: 18px;
+}
+
+.profile-form-card .form-group > label,
+.profile-form-card .form-field-label {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+  margin-bottom: 7px;
+}
+
+.profile-form-card .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Photo upload */
+.photo-upload {
+  margin-bottom: 24px;
+}
+
+.photo-upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 22px;
+  background: var(--clr-bg);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+}
+
+.photo-upload-preview img,
+.photo-upload-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  flex-shrink: 0;
+  border: 3px solid var(--clr-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.photo-upload-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--crimson-600), var(--crimson-900));
+}
+
+.photo-upload-meta h4 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--crimson-800);
+  margin-bottom: 4px;
+}
+
+.photo-upload-meta p {
+  font-size: 0.82rem;
+  color: var(--clr-muted);
+  margin: 0;
+}
+
+.file-upload-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: var(--clr-surface);
+  color: var(--crimson-700);
+  border: 1.5px dashed var(--crimson-400);
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+
+.file-upload-btn:hover {
+  background: var(--crimson-50);
+  border-color: var(--crimson-600);
+  color: var(--crimson-800);
+}
+
+.file-upload-name {
+  font-size: 0.85rem;
+  color: var(--clr-muted);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-upload-hint {
+  flex: 1 1 100%;
+  font-size: 0.78rem;
+  color: var(--ink-300);
+  margin: 0;
+}
+
+/* Native inputs inside profile form card */
+.profile-form-card input[type="text"],
+.profile-form-card input[type="number"],
+.profile-form-card textarea,
+.profile-form-card select:not(.select2-hidden-accessible) {
+  display: block;
+  width: 100%;
+  padding: 13px 16px;
+  background: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  color: var(--clr-text);
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-fast);
+}
+
+.profile-form-card input:focus,
+.profile-form-card textarea:focus {
+  outline: none;
+  border-color: var(--clr-primary);
+  background: var(--clr-surface);
+  box-shadow: 0 0 0 4px rgba(139, 30, 63, 0.09);
+}
+
+.profile-form-card textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.65;
+}
+
+/* ── Select2: shared ─────────────────────────────────────── */
+.profile-form-card .select2-container {
+  width: 100% !important;
+  margin-bottom: 0;
+}
+
+.profile-form-card .select2-container--default .select2-selection--single {
+  height: 48px !important;
+  border: 1.5px solid var(--clr-border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--clr-bg) !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 14px !important;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast) !important;
+}
+
+.profile-form-card .select2-container--default.select2-container--open .select2-selection--single,
+.profile-form-card .select2-container--default.select2-container--focus .select2-selection--single {
+  border-color: var(--clr-primary) !important;
+  box-shadow: 0 0 0 4px rgba(139, 30, 63, 0.09) !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 1.4 !important;
+  padding-left: 0 !important;
+  color: var(--clr-text) !important;
+  font-size: 0.9rem !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 46px !important;
+  right: 10px !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--single .select2-selection__placeholder {
+  color: var(--ink-300) !important;
+}
+
+/* ── Select2: multiple (fix broken flex layout) ───────────── */
+.profile-form-card .select2-container--default .select2-selection--multiple {
+  min-height: 48px !important;
+  padding: 8px 10px !important;
+  border: 1.5px solid var(--clr-border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--clr-bg) !important;
+  cursor: text;
+}
+
+.profile-form-card .select2-container--default.select2-container--focus .select2-selection--multiple {
+  border-color: var(--clr-primary) !important;
+  box-shadow: 0 0 0 4px rgba(139, 30, 63, 0.09) !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--multiple .select2-selection__choice {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  float: none !important;
+  margin: 0 !important;
+  padding: 5px 10px 5px 8px !important;
+  background: var(--crimson-100) !important;
+  border: 1px solid rgba(139, 30, 63, 0.15) !important;
+  border-radius: var(--radius-full) !important;
+  color: var(--crimson-800) !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  position: static !important;
+  order: 0;
+  margin: 0 2px 0 0 !important;
+  padding: 0 2px !important;
+  border: none !important;
+  border-right: none !important;
+  background: transparent !important;
+  color: var(--crimson-600) !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  cursor: pointer;
+}
+
+.profile-form-card .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+  color: var(--crimson-900) !important;
+  background: transparent !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--multiple .select2-search--inline {
+  float: none !important;
+  display: inline-block !important;
+  flex: 1 1 120px;
+  min-width: 120px;
+  max-width: 100%;
+  margin: 0 !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--multiple .select2-search__field {
+  margin: 0 !important;
+  padding: 4px 2px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.9rem !important;
+  color: var(--clr-text) !important;
+  box-shadow: none !important;
+}
+
+.profile-form-card .select2-container--default .select2-selection--multiple .select2-search__field::placeholder {
+  color: var(--ink-300);
+}
+
+/* Dropdown panel */
+.select2-dropdown {
+  border: 1px solid var(--clr-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+  z-index: 1100;
+}
+
+.select2-search--dropdown {
+  padding: 10px 12px;
+}
+
+.select2-search--dropdown .select2-search__field {
+  border: 1.5px solid var(--clr-border) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 8px 12px !important;
+}
+
+.select2-results__option {
+  padding: 10px 14px !important;
+  font-size: 0.9rem !important;
+}
+
+.select2-results__option--highlighted[aria-selected] {
+  background: var(--crimson-700) !important;
+  color: #fff !important;
+}
+
+.select2-results__option--selected {
+  background: var(--crimson-100) !important;
+  color: var(--crimson-800) !important;
+}
+
+@media (max-width: 600px) {
+  .profile-form-card .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .photo-upload-preview {
+    flex-direction: column;
+    text-align: center;
+  }
+}
