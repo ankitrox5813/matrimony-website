@@ -1,0 +1,158 @@
+
+.legal-page {
+  background: var(--clr-bg);
+  padding: var(--sp-xl) var(--sp-lg);
+  min-height: 100vh;
+}
+
+.legal-container {
+  width: 90%;
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: 56px 64px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Header block ─────────────────────────────────────────── */
+.legal-container h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: var(--clr-primary-dark);
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.effective-date {
+  font-size: .88rem;
+  color: var(--clr-muted);
+  margin-bottom: var(--sp-lg);
+  letter-spacing: .02em;
+}
+
+.legal-intro {
+  font-size: 1rem;
+  color: var(--ink-500);
+  line-height: 1.75;
+  margin-bottom: var(--sp-lg);
+  padding-bottom: var(--sp-lg);
+  border-bottom: 1px solid var(--clr-border);
+}
+
+/* ── Section headings ─────────────────────────────────────── */
+.legal-container h2 {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--clr-primary-dark);
+  margin-top: var(--sp-xl);
+  margin-bottom: 14px;
+  padding-left: 16px;
+  border-left: 4px solid var(--clr-primary);
+  line-height: 1.25;
+}
+
+/* ── Body text ────────────────────────────────────────────── */
+.legal-container p {
+  font-size: .95rem;
+  color: var(--ink-500);
+  line-height: 1.8;
+  margin-bottom: var(--sp-md);
+}
+
+/* ── Lists ────────────────────────────────────────────────── */
+.legal-container ul {
+  margin-left: 20px;
+  margin-bottom: var(--sp-md);
+}
+
+.legal-container ul li {
+  font-size: .92rem;
+  color: var(--ink-500);
+  margin-bottom: 10px;
+  line-height: 1.65;
+  position: relative;
+}
+
+/* ── Callout boxes ────────────────────────────────────────── */
+.highlight {
+  background: var(--crimson-50);
+  border-left: 4px solid var(--clr-primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 18px 24px;
+  margin: var(--sp-md) 0;
+  font-size: .92rem;
+  color: var(--ink-700);
+  line-height: 1.7;
+}
+
+.warning-box {
+  background: #fef9ec;
+  border-left: 4px solid #d97706;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 18px 24px;
+  margin: var(--sp-md) 0;
+  font-size: .92rem;
+  color: #78350f;
+  line-height: 1.7;
+}
+
+.promise-box {
+  background: #f0fdf4;
+  border-left: 4px solid #16a34a;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 18px 24px;
+  margin: var(--sp-md) 0;
+  font-size: .92rem;
+  color: #14532d;
+  line-height: 1.7;
+}
+
+.report-box {
+  background: var(--crimson-50);
+  border-left: 4px solid var(--clr-primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 18px 24px;
+  margin: var(--sp-md) 0;
+}
+
+.report-box ul { margin-bottom: 0; }
+
+/* ── Links ────────────────────────────────────────────────── */
+.legal-container a {
+  color: var(--clr-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.legal-container a:hover { text-decoration: underline; }
+
+/* ── Footer inside legal pages ────────────────────────────── */
+.legal-footer {
+  margin-top: var(--sp-xl);
+  padding-top: var(--sp-lg);
+  border-top: 1px solid var(--clr-border);
+  text-align: center;
+  font-size: .83rem;
+  color: var(--clr-muted);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .legal-container {
+    padding: 32px 24px;
+  }
+
+  .legal-container h1 { font-size: 2rem; }
+  .legal-container h2 { font-size: 1.2rem; }
+  .legal-container p,
+  .legal-container li { font-size: .9rem; }
+}
+
+@media (max-width: 480px) {
+  .legal-page { padding: var(--sp-lg) var(--sp-md); }
+  .legal-container { width: 100%; border-radius: var(--radius-md); }
+}

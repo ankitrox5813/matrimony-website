@@ -1,3 +1,4 @@
+
 function toggleMenu() {
 
     const nav = document.querySelector('.nav-links');
@@ -45,3 +46,70 @@ if (religionSelect && communitySelect) {
         }
     });
 }
+
+// window.addEventListener("load", function () {
+
+//     if (religionSelect.value !== "") {
+
+//         const selectedReligion = religionSelect.value;
+
+//         communitySelect.innerHTML =
+//         '<option value="">Select Community</option>';
+
+//         communitiesByReligion[selectedReligion]
+//         .forEach(function(community){
+
+//             const option =
+//             document.createElement('option');
+
+//             option.value = community;
+
+//             option.textContent = community;
+
+//             communitySelect.appendChild(option);
+
+//         });
+
+//     }
+
+// });
+window.addEventListener("load", function () {
+
+    if (religionSelect && communitySelect) {
+
+        const selectedReligion = religionSelect.value;
+
+        communitySelect.innerHTML =
+        '<option value="">Select Community</option>';
+
+        if (
+            selectedReligion &&
+            communitiesByReligion[selectedReligion]
+        ) {
+
+            communitiesByReligion[selectedReligion]
+            .forEach(function(community) {
+
+                const option =
+                document.createElement('option');
+
+                option.value = community;
+
+                option.textContent = community;
+
+                // IMPORTANT
+                if (community === savedCommunity) {
+
+                    option.selected = true;
+                }
+
+                communitySelect.appendChild(option);
+
+            });
+
+        }
+
+    }
+
+});
+option.selected = true;

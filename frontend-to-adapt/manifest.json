@@ -1,0 +1,15 @@
+{
+    "name": "Aurivah",
+    "short_name": "Aurivah",
+    "start_url": "/aurivah/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#e91e63",
+    "icons": [
+        {
+            "src": "images/logo.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}
